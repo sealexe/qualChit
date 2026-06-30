@@ -1,0 +1,15 @@
+/* Пример CSS-модуля. Vite поддерживает их "из коробки" —
+   достаточно называть файл со styles как *.module.css */
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: system-ui, sans-serif;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+}

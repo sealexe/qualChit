@@ -1,0 +1,10 @@
+/* Минимальный глобальный сброс стилей.
+   Стили компонентов — через CSS-модули (см. App.module.css). */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}

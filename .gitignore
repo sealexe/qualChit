@@ -1,0 +1,26 @@
+# зависимости
+node_modules/
+
+# сборка
+frontend/dist/
+backend/dist/
+
+# временные файлы загрузок и сгенерированные архивы
+backend/tmp_uploads/
+backend/uploads/
+backend/output/
+*.zip
+
+# переменные окружения
+.env
+.env.local
+
+# логи
+*.log
+npm-debug.log*
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
