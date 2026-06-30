@@ -33,6 +33,9 @@ const REQUIRED_FIELDS = [
 
 function Form() {
   const [formData, setFormData] = useState(initialFormState)
+  const [download, setDownload] = useState(null) // { url, name }
+  const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState(null)
 
   // Простая проверка: все обязательные текстовые поля не пустые
   // (с учётом пробелов по краям).
@@ -60,9 +63,37 @@ function Form() {
     }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    console.log('Данные формы:', formData)
+    setIsLoading(true)
+    setErrorMessage(null)
+    setDownload(null)
+
+    try {
+      const response = await fetch('http://localhost:3001/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || 'Ошибка сервера')
+      }
+
+      // Читаем имя архива из заголовка Content-Disposition
+      const disposition = response.headers.get('Content-Disposition') || ''
+      const match = disposition.match(/filename\*=UTF-8''(.+)/)
+      const archiveName = match ? decodeURIComponent(match[1]) : 'documents.zip'
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      setDownload({ url, name: archiveName })
+    } catch (err) {
+      setErrorMessage(err.message)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -188,15 +219,30 @@ function Form() {
       <button
         type="submit"
         className={styles.submitButton}
-        disabled={!isFormValid}
+        disabled={!isFormValid || isLoading}
       >
-        Сгенерировать
+        {isLoading ? 'Генерируется...' : 'Сгенерировать'}
       </button>
 
-      {/* 7. Заглушка блока скачивания архива */}
-      <div className={styles.downloadPlaceholder}>
-        Архив появится здесь после генерации
-      </div>
+      {/* 7. Блок скачивания архива */}
+      {errorMessage && (
+        <div className={styles.error}>Ошибка: {errorMessage}</div>
+      )}
+      {download ? (
+        <a
+          href={download.url}
+          download={download.name}
+          className={styles.downloadLink}
+        >
+          Скачать архив
+        </a>
+      ) : (
+        !errorMessage && (
+          <div className={styles.downloadPlaceholder}>
+            Архив появится здесь после генерации
+          </div>
+        )
+      )}
     </form>
   )
 }
