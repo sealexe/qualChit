@@ -1,9 +1,11 @@
+const path = require('path')
 const express = require('express')
 const cors = require('cors')
 const multer = require('multer')
 const JSZip = require('jszip')
 const { transformZadanie } = require('./transformers/zadanie')
 const { transformSpecifikaciya } = require('./transformers/specifikaciya')
+const { findIncomingFileType } = require('./config/incomingFiles')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -17,8 +19,15 @@ app.get('/', (req, res) => {
   res.json({ message: 'qualChit backend работает' })
 })
 
-// Генерирует архив с "Заданием" и "Спецификацией" по данным формы.
-app.post('/api/generate', async (req, res) => {
+// multer/busboy декодируют имя файла из multipart-запроса как latin1,
+// поэтому кириллица в оригинальном имени приходит "битой" — перекодируем обратно.
+function fixFileNameEncoding(originalName) {
+  return Buffer.from(originalName, 'latin1').toString('utf8')
+}
+
+// Генерирует архив с "Заданием", "Спецификацией" и трансформированными
+// файлами, загруженными в drag&drop.
+app.post('/api/generate', upload.array('files'), async (req, res) => {
   try {
     const formData = req.body
 
@@ -51,6 +60,21 @@ app.post('/api/generate', async (req, res) => {
     zip.file(zadanieName, zadanieBuffer)
     zip.file(specifikaciyaName, specifikaciyaBuffer)
 
+    // Файлы, загруженные в drag&drop — каждый обрабатывается своим
+    // трансформером (см. backend/config/incomingFiles.js). Итоговый файл
+    // получает то же имя, с которым пришёл, но с расширением .docx.
+    for (const file of req.files || []) {
+      const originalName = fixFileNameEncoding(file.originalname)
+      const fileType = findIncomingFileType(originalName)
+      if (!fileType) {
+        throw new Error(`Неизвестный тип файла: ${originalName}`)
+      }
+
+      const resultBuffer = fileType.transform(file.buffer, { ...formData, examDate: formattedDate })
+      const outputName = path.basename(originalName, path.extname(originalName)) + '.docx'
+      zip.file(outputName, resultBuffer)
+    }
+
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
 
     // encodeURIComponent нужен для кириллицы в заголовке Content-Disposition
@@ -73,6 +97,6 @@ app.post('/api/generate', async (req, res) => {
   }
 })
 
-app.listen(PORT, () => {
-  console.log(`Backend запущен: http://localhost:${PORT}`)
+app.listen(PORT, '127.0.0.1', () => {
+  console.log(`Backend запущен: http://127.0.0.1:${PORT}`)
 })

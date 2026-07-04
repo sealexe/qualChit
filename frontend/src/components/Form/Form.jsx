@@ -70,10 +70,22 @@ function Form() {
     setDownload(null)
 
     try {
-      const response = await fetch('http://localhost:3001/api/generate', {
+      // multipart/form-data — чтобы вместе с текстовыми полями передать
+      // и сами файлы из drag&drop
+      const body = new FormData()
+      for (const key of Object.keys(formData)) {
+        if (key === 'files') continue
+        body.append(key, formData[key])
+      }
+      for (const file of formData.files) {
+        body.append('files', file)
+      }
+
+      // 127.0.0.1, а не localhost — чтобы запрос не зависел от резолвинга
+      // имени, который иногда ломает VPN (см. vite.config.js)
+      const response = await fetch('http://127.0.0.1:3001/api/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body,
       })
 
       if (!response.ok) {
