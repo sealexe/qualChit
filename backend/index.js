@@ -6,6 +6,7 @@ const JSZip = require('jszip')
 const { transformZadanie } = require('./transformers/zadanie')
 const { transformSpecifikaciya } = require('./transformers/specifikaciya')
 const { findIncomingFileType } = require('./config/incomingFiles')
+const { getStaticFiles } = require('./services/staticFiles')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -73,6 +74,13 @@ app.post('/api/generate', upload.array('files'), async (req, res) => {
       const resultBuffer = fileType.transform(file.buffer, { ...formData, examDate: formattedDate })
       const outputName = path.basename(originalName, path.extname(originalName)) + '.docx'
       zip.file(outputName, resultBuffer)
+    }
+
+    // Статичные файлы, которые кладутся в архив без изменений
+    // (см. backend/services/staticFiles.js).
+    const staticFiles = getStaticFiles(controlMethod, sampleNumber)
+    for (const { fileName, buffer } of staticFiles) {
+      zip.file(fileName, buffer)
     }
 
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
