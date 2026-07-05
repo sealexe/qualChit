@@ -10,6 +10,7 @@ const CONTROL_METHODS = ['ВИК', 'РК', 'УК']
 // легко увидеть всю структуру данных формы в одном месте.
 const initialFormState = {
   fullName: '',
+  address: '',
   controlMethod: CONTROL_METHODS[0],
   sampleNumber: '',
   examDate: '',
@@ -24,6 +25,7 @@ const initialFormState = {
 // видно весь список проверок в одном месте.
 const REQUIRED_FIELDS = [
   'fullName',
+  'address',
   'sampleNumber',
   'examDate',
   'chairman',
@@ -123,6 +125,21 @@ function Form() {
           type="text"
           required
           value={formData.fullName}
+          onChange={handleFieldChange}
+        />
+      </div>
+
+      {/* Адрес — нужен для "Заявления" (плейсхолдер {{address}}) */}
+      <div className={styles.row}>
+        <label className={styles.label} htmlFor="address">
+          Адрес
+        </label>
+        <input
+          id="address"
+          name="address"
+          type="text"
+          required
+          value={formData.address}
           onChange={handleFieldChange}
         />
       </div>

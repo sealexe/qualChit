@@ -23,7 +23,7 @@ const INCOMING_FILE_TYPES = [
   {
     // пример входящего имени: Заявление_ЦОК-001-04999.rtf
     prefix: 'Заявление',
-    templateFileName: 'Задание.docx',
+    templateFileName: 'Заявление.docx',
     transform: transformZayavlenie,
   },
   {
