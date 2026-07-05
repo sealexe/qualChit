@@ -15,7 +15,11 @@ const { convertToDocx } = require('../services/convertToDocx')
 //       таблицу из заготовки;
 //    б) абзац "Свидетельство о квалификации или заключение..." и
 //       следующий за ним абзац с адресом заменяем на аналогичные два
-//       абзаца из заполненной заготовки (там уже подставлен адрес).
+//       абзаца из заполненной заготовки (там уже подставлен адрес);
+//    в) убираем пустой абзац перед фразой "Я уведомлен(а) и понимаю" и
+//       немного уменьшаем нижнее поле страницы — раньше это делали
+//       вручную в Word, чтобы таблица с подписью в конце уместилась на
+//       первой странице (без этого готовое заявление занимает 2 страницы).
 // Всё остальное во входящем файле (текст заявления, подпись, колонтитулы)
 // не трогаем.
 //
@@ -26,6 +30,14 @@ const { convertToDocx } = require('../services/convertToDocx')
 // С этой фразы всегда начинается абзац, который нужно заменить
 // (а вместе с ним — и следующий за ним абзац с адресом).
 const ADDRESS_PARAGRAPH_START_TEXT = 'Свидетельство о квалификации или заключение'
+
+// Этой фразой всегда начинается абзац после пустой "строки-разделителя",
+// которую нужно убрать, чтобы освободить одну строку места на странице.
+const NOTICE_PARAGRAPH_START_TEXT = 'Я уведомлен(а) и понимаю'
+
+// Нижнее поле страницы в твипах (1440 твипов = 1 дюйм). Подобрано так,
+// чтобы с запасом хватало места даже при длинном адресе в одну-две строки.
+const BOTTOM_MARGIN_TWIPS = 200
 
 function transformZayavlenie(originalFile, formData) {
   const { controlMethod, address } = formData
@@ -134,10 +146,47 @@ function replaceTableAndAddress(originalBuffer, templateBuffer) {
     templateAddressParagraphs +
     documentXml.slice(addressBlockEnd)
 
+  // в) страница целиком должна уместиться на одном листе
+  documentXml = removeParagraphBeforeNotice(documentXml)
+  documentXml = shrinkBottomMargin(documentXml)
+
   documentXml = removeBrokenDocGrid(documentXml)
 
   originalZip.file('word/document.xml', documentXml)
   return originalZip.generate({ type: 'nodebuffer' })
+}
+
+// Убирает пустой абзац-разделитель прямо перед фразой
+// NOTICE_PARAGRAPH_START_TEXT — он всегда один и тот же (просто пробел),
+// освобождённая строка помогает уместить документ на одной странице.
+function removeParagraphBeforeNotice(documentXml) {
+  const noticeStart = findParagraphStart(documentXml, NOTICE_PARAGRAPH_START_TEXT)
+
+  const paragraphTagRegex = /<w:p(?=[ >])[^>]*>/g
+  let precedingStart = -1
+  let match
+  while ((match = paragraphTagRegex.exec(documentXml)) && match.index < noticeStart) {
+    precedingStart = match.index
+  }
+  if (precedingStart === -1) {
+    throw new Error(`Не найден абзац перед текстом: "${NOTICE_PARAGRAPH_START_TEXT}"`)
+  }
+
+  return documentXml.slice(0, precedingStart) + documentXml.slice(noticeStart)
+}
+
+// Уменьшает нижнее поле страницы (см. BOTTOM_MARGIN_TWIPS) — раньше это
+// делали вручную в Word, чтобы таблица с подписью в конце документа не
+// уезжала на вторую страницу.
+function shrinkBottomMargin(documentXml) {
+  const withNewMargin = documentXml.replace(
+    /(<w:pgMar[^/]*w:bottom=")\d+(")/,
+    `$1${BOTTOM_MARGIN_TWIPS}$2`,
+  )
+  if (withNewMargin === documentXml) {
+    throw new Error('Не найдено поле w:bottom в <w:pgMar>')
+  }
+  return withNewMargin
 }
 
 // LibreOffice при конвертации RTF→DOCX иногда записывает отрицательный
