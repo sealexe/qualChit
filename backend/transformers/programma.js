@@ -2,6 +2,7 @@ const path = require('path')
 const PizZip = require('pizzip')
 const { fillTemplate } = require('../services/fillTemplate')
 const { convertToDocx } = require('../services/convertToDocx')
+const { buildSampleId } = require('../config/sampleId')
 
 // Эти два текста всегда есть в конвертированном входящем файле и отмечают
 // начало и конец блока, который нужно заменить содержимым заготовки.
@@ -32,7 +33,7 @@ function transformProgramma(originalFile, formData) {
   )
 
   const filledTemplateBuffer = fillTemplate(templatePath, {
-    ex_sample: `ОК-${controlMethod}-${sampleNumber}`,
+    ex_sample: buildSampleId(controlMethod, sampleNumber),
   })
 
   const convertedBuffer = convertToDocx(originalFile, '.rtf')

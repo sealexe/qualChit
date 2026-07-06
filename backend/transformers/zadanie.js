@@ -1,5 +1,6 @@
 const path = require('path')
 const { fillTemplate } = require('../services/fillTemplate')
+const { buildSampleId } = require('../config/sampleId')
 
 // Принимает данные формы, возвращает Buffer готового .docx "Задание".
 function transformZadanie(formData) {
@@ -12,7 +13,7 @@ function transformZadanie(formData) {
   const data = {
     fio: fullName,
     date: examDate,
-    ex_sample: `ОК-${controlMethod}-${sampleNumber}`,
+    ex_sample: buildSampleId(controlMethod, sampleNumber),
     chairman,
     expert,
     tech_expert: techExpert,

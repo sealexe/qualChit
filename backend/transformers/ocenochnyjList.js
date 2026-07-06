@@ -2,6 +2,7 @@ const path = require('path')
 const PizZip = require('pizzip')
 const { fillTemplate } = require('../services/fillTemplate')
 const { convertToDocx } = require('../services/convertToDocx')
+const { buildSampleId } = require('../config/sampleId')
 
 // Трансформер для входящего файла "Оценочный_лист_XXXXX_ФИО.rtf".
 // Связан с заготовкой library/{controlMethod}/templates/Оценочный_лист.docx
@@ -28,7 +29,7 @@ function transformOcenochnyjList(originalFile, formData) {
 
   const filledTemplateBuffer = fillTemplate(templatePath, {
     candidate: formatShortName(fullName),
-    ex_sample: `ОК-${controlMethod}-${sampleNumber}`,
+    ex_sample: buildSampleId(controlMethod, sampleNumber),
     chairman,
     expert,
     tech_expert: techExpert,

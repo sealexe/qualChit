@@ -6,6 +6,7 @@ const JSZip = require('jszip')
 const { transformZadanie } = require('./transformers/zadanie')
 const { transformSpecifikaciya } = require('./transformers/specifikaciya')
 const { findIncomingFileType } = require('./config/incomingFiles')
+const { buildSampleId } = require('./config/sampleId')
 const { getStaticFiles } = require('./services/staticFiles')
 
 const app = express()
@@ -55,7 +56,7 @@ app.post('/api/generate', upload.array('files'), async (req, res) => {
     const zadanieBuffer = transformZadanie({ ...formData, examDate: formattedDate })
     const specifikaciyaBuffer = transformSpecifikaciya({ ...formData, examDate: formattedDate })
 
-    const zadanieName = `Задание ОК-${controlMethod}-${sampleNumber}.docx`
+    const zadanieName = `Задание ${buildSampleId(controlMethod, sampleNumber)}.docx`
     const specifikaciyaName = `Спецификация_заданий_${lastName}_${firstName}_${patronymic}_практика.docx`
 
     const zip = new JSZip()
