@@ -32,7 +32,8 @@ app.post('/api/generate', upload.array('files'), async (req, res) => {
   try {
     const formData = req.body
 
-    const { fullName, controlMethod, sampleNumber, examDate } = formData
+    const { fullName, controlMethod, sampleNumber, examDate, stng } = formData
+    const isStng = stng === 'true' || stng === true
 
     // Разбиваем ФИО на части для имён файлов и архива
     const nameParts = fullName.trim().split(/\s+/)
@@ -78,7 +79,7 @@ app.post('/api/generate', upload.array('files'), async (req, res) => {
 
     // Статичные файлы, которые кладутся в архив без изменений
     // (см. backend/services/staticFiles.js).
-    const staticFiles = getStaticFiles(controlMethod, sampleNumber)
+    const staticFiles = getStaticFiles(controlMethod, sampleNumber, isStng)
     for (const { fileName, buffer } of staticFiles) {
       zip.file(fileName, buffer)
     }

@@ -40,6 +40,27 @@
   flex: 1;
 }
 
+.sampleNumberRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.sampleNumberRow input {
+  flex: 1;
+  min-width: 0;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+}
+
 .label {
   font-size: 0.9rem;
   font-weight: 500;

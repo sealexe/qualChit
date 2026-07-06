@@ -13,6 +13,7 @@ const initialFormState = {
   address: '',
   controlMethod: CONTROL_METHODS[0],
   sampleNumber: '',
+  stng: false,
   examDate: '',
   chairman: '',
   expert: '',
@@ -45,11 +46,11 @@ function Form() {
     (field) => formData[field].trim() !== '',
   )
 
-  // Универсальный обработчик для текстовых полей и select —
+  // Универсальный обработчик для текстовых полей, select и чек-боксов —
   // обновляет одно поле в formData по его имени (name).
   const handleFieldChange = (event) => {
-    const { name, value } = event.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const { name, value, type, checked } = event.target
+    setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
   }
 
   // Добавляет новые файлы к уже выбранным (не заменяет список).
@@ -167,14 +168,26 @@ function Form() {
           <label className={styles.label} htmlFor="sampleNumber">
             № образца
           </label>
-          <input
-            id="sampleNumber"
-            name="sampleNumber"
-            type="text"
-            required
-            value={formData.sampleNumber}
-            onChange={handleFieldChange}
-          />
+          <div className={styles.sampleNumberRow}>
+            <input
+              id="sampleNumber"
+              name="sampleNumber"
+              type="text"
+              required
+              value={formData.sampleNumber}
+              onChange={handleFieldChange}
+            />
+            <label className={styles.checkboxLabel} htmlFor="stng">
+              <input
+                id="stng"
+                name="stng"
+                type="checkbox"
+                checked={formData.stng}
+                onChange={handleFieldChange}
+              />
+              СТНГ
+            </label>
+          </div>
         </div>
       </div>
 
