@@ -32,17 +32,62 @@
 .fileItem {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.4rem 0.6rem;
   background-color: #f3f4f6;
   border-radius: 4px;
   font-size: 0.9rem;
 }
 
+/* Внешняя обёртка имени файла: занимает всё свободное место
+   и обрезает то, что не влезло. container-type нужен, чтобы
+   в анимации ниже знать ширину этой обёртки (единица cqw). */
+.fileName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  container-type: inline-size;
+}
+
+/* Внутренняя часть — сам текст. min-width: 100% гарантирует,
+   что короткие имена не двигаются: для них сдвиг в анимации
+   получается равным нулю. */
+.fileNameInner {
+  display: inline-block;
+  min-width: 100%;
+  animation: slideName 8s ease-in-out infinite alternate;
+}
+
+/* Плавное движение текста от левого края до правого и обратно.
+   Сдвиг: -100% (вся ширина текста) + 100cqw (ширина обёртки).
+   Паузы на краях — за счёт задержки на 0–15% и 85–100%. */
+@keyframes slideName {
+  0%, 15% {
+    transform: translateX(0);
+  }
+  85%, 100% {
+    transform: translateX(calc(-100% + 100cqw));
+  }
+}
+
+/* Кнопка-крестик для удаления файла из списка */
 .removeButton {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
   border: none;
+  border-radius: 4px;
   background: none;
   color: #dc2626;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.removeButton:hover {
+  background-color: #fee2e2;
 }

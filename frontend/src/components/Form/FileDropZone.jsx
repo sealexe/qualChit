@@ -53,13 +53,19 @@ function FileDropZone({ files, onAddFiles, onRemoveFile }) {
         <ul className={styles.fileList}>
           {files.map((file, index) => (
             <li key={`${file.name}-${index}`} className={styles.fileItem}>
-              <span>{file.name}</span>
+              {/* Двойная обёртка нужна для анимации длинных имён:
+                  внешний span обрезает текст, внутренний — двигается */}
+              <span className={styles.fileName}>
+                <span className={styles.fileNameInner}>{file.name}</span>
+              </span>
               <button
                 type="button"
                 className={styles.removeButton}
                 onClick={() => onRemoveFile(index)}
+                aria-label="Убрать файл"
+                title="Убрать файл"
               >
-                Убрать
+                ×
               </button>
             </li>
           ))}
