@@ -2,6 +2,7 @@ const path = require('path')
 const PizZip = require('pizzip')
 const { fillTemplate } = require('../services/fillTemplate')
 const { convertToDocx } = require('../services/convertToDocx')
+const { findTextPosition } = require('../services/findTextPosition')
 
 // Трансформер для входящего файла "Заявление_ЦОК-XXX-XXXXX.rtf".
 // Связан с заготовкой library/{controlMethod}/templates/Заявление.docx
@@ -73,7 +74,7 @@ function extractFirstTable(documentXml) {
 // текст. Важно не перепутать с <w:pPr>/<w:pStyle> — они тоже начинаются с
 // "<w:p", поэтому дальше требуем пробел или ">".
 function findParagraphStart(documentXml, searchText) {
-  const textIndex = documentXml.indexOf(searchText)
+  const textIndex = findTextPosition(documentXml, searchText)
   if (textIndex === -1) {
     throw new Error(`Не найден текст: "${searchText}"`)
   }
@@ -93,7 +94,7 @@ function findParagraphStart(documentXml, searchText) {
 // Ищет конец абзаца, СЛЕДУЮЩЕГО за тем, в котором встречается искомый
 // текст (т.е. пропускаем закрытие первого абзаца и ищем закрытие второго).
 function findNextParagraphEnd(documentXml, searchText) {
-  const textIndex = documentXml.indexOf(searchText)
+  const textIndex = findTextPosition(documentXml, searchText)
   if (textIndex === -1) {
     throw new Error(`Не найден текст: "${searchText}"`)
   }

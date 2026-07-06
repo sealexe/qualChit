@@ -3,6 +3,7 @@ const PizZip = require('pizzip')
 const { fillTemplate } = require('../services/fillTemplate')
 const { convertToDocx } = require('../services/convertToDocx')
 const { buildSampleId } = require('../config/sampleId')
+const { findTextPosition } = require('../services/findTextPosition')
 
 // Эти два текста всегда есть в конвертированном входящем файле и отмечают
 // начало и конец блока, который нужно заменить содержимым заготовки.
@@ -63,7 +64,7 @@ function extractBodyContent(documentXml) {
 // текст. Важно не перепутать с <w:pPr>/<w:pStyle> — они тоже начинаются с
 // "<w:p", поэтому дальше требуем пробел или ">".
 function findParagraphStart(documentXml, searchText) {
-  const textIndex = documentXml.indexOf(searchText)
+  const textIndex = findTextPosition(documentXml, searchText)
   if (textIndex === -1) {
     throw new Error(`Не найден текст: "${searchText}"`)
   }
@@ -82,7 +83,7 @@ function findParagraphStart(documentXml, searchText) {
 
 // Ищет конец абзаца (</w:p>), в котором встречается искомый текст.
 function findParagraphEnd(documentXml, searchText) {
-  const textIndex = documentXml.indexOf(searchText)
+  const textIndex = findTextPosition(documentXml, searchText)
   if (textIndex === -1) {
     throw new Error(`Не найден текст: "${searchText}"`)
   }

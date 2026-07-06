@@ -17,6 +17,10 @@ const upload = multer({ storage: multer.memoryStorage() })
 app.use(cors({ exposedHeaders: ['Content-Disposition'] }))
 app.use(express.json())
 
+// Отдаём собранный фронтенд (папка frontend/dist), если он есть.
+// Собрать его: cd frontend && npm run build
+app.use(express.static(path.join(__dirname, '../frontend/dist')))
+
 app.get('/', (req, res) => {
   res.json({ message: 'qualChit backend работает' })
 })
