@@ -77,6 +77,13 @@ function Form() {
     }))
   }
 
+  // После скачивания архива сбрасываем только те поля, что относятся
+  // к конкретному кандидату — ФИО, дату и загруженные файлы. Остальное
+  // (метод контроля, комиссия и т.д.) обычно не меняется между кандидатами.
+  const handleDownloadClick = () => {
+    setFormData((prev) => ({ ...prev, fullName: '', examDate: '', files: [] }))
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setIsLoading(true)
@@ -287,6 +294,7 @@ function Form() {
           href={download.url}
           download={download.name}
           className={styles.downloadLink}
+          onClick={handleDownloadClick}
         >
           Скачать архив
         </a>

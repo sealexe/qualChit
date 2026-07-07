@@ -12,7 +12,17 @@
 //
 // Возвращает -1, если фраза не найдена.
 function findTextPosition(documentXml, searchText) {
-  // Для каждого символа видимого текста запоминаем, где он стоит в XML
+  const { plainText, xmlPositions } = collectVisibleText(documentXml)
+  const foundAt = plainText.indexOf(searchText)
+  return foundAt === -1 ? -1 : xmlPositions[foundAt]
+}
+
+// Собирает весь видимый текст (содержимое всех <w:t>) в одну строку и для
+// каждого её символа запоминает позицию в исходной XML-строке. Позволяет
+// находить в XML не только целую фразу (см. findTextPosition), но и позицию
+// произвольного символа внутри найденного текста — например, чтобы вставить
+// что-то посреди фразы, даже если она разбита на несколько <w:t>-кусков.
+function collectVisibleText(documentXml) {
   const xmlPositions = []
   let plainText = ''
 
@@ -27,8 +37,7 @@ function findTextPosition(documentXml, searchText) {
     plainText += content
   }
 
-  const foundAt = plainText.indexOf(searchText)
-  return foundAt === -1 ? -1 : xmlPositions[foundAt]
+  return { plainText, xmlPositions }
 }
 
-module.exports = { findTextPosition }
+module.exports = { findTextPosition, collectVisibleText }

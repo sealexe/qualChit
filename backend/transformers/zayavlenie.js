@@ -2,7 +2,7 @@ const path = require('path')
 const PizZip = require('pizzip')
 const { fillTemplate } = require('../services/fillTemplate')
 const { convertToDocx } = require('../services/convertToDocx')
-const { findTextPosition } = require('../services/findTextPosition')
+const { findTextPosition, collectVisibleText } = require('../services/findTextPosition')
 
 // Трансформер для входящего файла "Заявление_ЦОК-XXX-XXXXX.rtf".
 // Связан с заготовкой library/{controlMethod}/templates/Заявление.docx
@@ -21,6 +21,9 @@ const { findTextPosition } = require('../services/findTextPosition')
 //       немного уменьшаем нижнее поле страницы — раньше это делали
 //       вручную в Word, чтобы таблица с подписью в конце уместилась на
 //       первой странице (без этого готовое заявление занимает 2 страницы).
+//    г) в абзаце "Я, ФИО, Дата рождения: ..., паспорт: ..." иногда при
+//       выгрузке из ЭДО пропадает слово "паспорт" (остаётся просто
+//       "..., : 1514 186800") — возвращаем его на место.
 // Всё остальное во входящем файле (текст заявления, подпись, колонтитулы)
 // не трогаем.
 //
@@ -35,6 +38,14 @@ const ADDRESS_PARAGRAPH_START_TEXT = 'Свидетельство о квалиф
 // Этой фразой всегда начинается абзац после пустой "строки-разделителя",
 // которую нужно убрать, чтобы освободить одну строку места на странице.
 const NOTICE_PARAGRAPH_START_TEXT = 'Я уведомлен(а) и понимаю'
+
+// Этой фразой всегда начинается абзац с ФИО, датой рождения и паспортом.
+const APPLICANT_PARAGRAPH_START_TEXT = 'Я, '
+
+// В этом абзаце перед номером паспорта должно стоять слово "паспорт", то
+// есть "..., паспорт: 1514 186800". Если слово пропало, между запятой и
+// двоеточием не остаётся ничего, кроме пробелов: "..., : 1514 186800".
+const MISSING_PASSPORT_WORD_REGEX = /,\s*:/
 
 // Нижнее поле страницы в твипах (1440 твипов = 1 дюйм). Подобрано так,
 // чтобы с запасом хватало места даже при длинном адресе в одну-две строки.
@@ -151,6 +162,9 @@ function replaceTableAndAddress(originalBuffer, templateBuffer) {
   documentXml = removeParagraphBeforeNotice(documentXml)
   documentXml = shrinkBottomMargin(documentXml)
 
+  // г) слово "паспорт" перед номером паспорта на месте
+  documentXml = addMissingPassportWord(documentXml)
+
   documentXml = removeBrokenDocGrid(documentXml)
 
   originalZip.file('word/document.xml', documentXml)
@@ -174,6 +188,31 @@ function removeParagraphBeforeNotice(documentXml) {
   }
 
   return documentXml.slice(0, precedingStart) + documentXml.slice(noticeStart)
+}
+
+// Возвращает слово "паспорт" на место, если оно пропало в абзаце
+// APPLICANT_PARAGRAPH_START_TEXT (см. MISSING_PASSPORT_WORD_REGEX). Ищем
+// не по сырому XML, а по видимому тексту абзаца (collectVisibleText), чтобы
+// найти двоеточие, даже если абзац разбит на несколько <w:t>-кусков.
+function addMissingPassportWord(documentXml) {
+  const paragraphStart = findParagraphStart(documentXml, APPLICANT_PARAGRAPH_START_TEXT)
+  const paragraphEnd = documentXml.indexOf('</w:p>', paragraphStart) + '</w:p>'.length
+  const paragraphXml = documentXml.slice(paragraphStart, paragraphEnd)
+
+  const { plainText, xmlPositions } = collectVisibleText(paragraphXml)
+  const match = MISSING_PASSPORT_WORD_REGEX.exec(plainText)
+  if (!match) {
+    return documentXml // слово "паспорт" уже на месте — ничего не меняем
+  }
+
+  // Последний символ совпадения — само двоеточие, перед ним и вставляем слово.
+  const colonPlainIndex = match.index + match[0].length - 1
+  const colonXmlPosition = xmlPositions[colonPlainIndex]
+
+  const fixedParagraphXml =
+    paragraphXml.slice(0, colonXmlPosition) + 'паспорт' + paragraphXml.slice(colonXmlPosition)
+
+  return documentXml.slice(0, paragraphStart) + fixedParagraphXml + documentXml.slice(paragraphEnd)
 }
 
 // Уменьшает нижнее поле страницы (см. BOTTOM_MARGIN_TWIPS) — раньше это

@@ -30,24 +30,23 @@ function FileDropZone({ files, onAddFiles, onRemoveFile }) {
     event.target.value = ''
   }
 
+  // Клик по крестику не должен всплывать до зоны и открывать выбор файла
+  const handleRemoveClick = (event, index) => {
+    event.stopPropagation()
+    onRemoveFile(index)
+  }
+
   return (
-    <div>
-      <div
-        className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => inputRef.current.click()}
-      >
-        <p>Перетащите файлы сюда или нажмите, чтобы выбрать</p>
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          className={styles.hiddenInput}
-          onChange={handleInputChange}
-        />
-      </div>
+    <div
+      className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      onClick={() => inputRef.current.click()}
+    >
+      {files.length === 0 && (
+        <p className={styles.placeholder}>Перетащите файлы сюда или нажмите, чтобы выбрать</p>
+      )}
 
       {files.length > 0 && (
         <ul className={styles.fileList}>
@@ -61,7 +60,7 @@ function FileDropZone({ files, onAddFiles, onRemoveFile }) {
               <button
                 type="button"
                 className={styles.removeButton}
-                onClick={() => onRemoveFile(index)}
+                onClick={(event) => handleRemoveClick(event, index)}
                 aria-label="Убрать файл"
                 title="Убрать файл"
               >
@@ -71,6 +70,14 @@ function FileDropZone({ files, onAddFiles, onRemoveFile }) {
           ))}
         </ul>
       )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        className={styles.hiddenInput}
+        onChange={handleInputChange}
+      />
     </div>
   )
 }
