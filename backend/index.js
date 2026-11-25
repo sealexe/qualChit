@@ -5,6 +5,7 @@ const multer = require('multer')
 const JSZip = require('jszip')
 const { transformZadanie } = require('./transformers/zadanie')
 const { transformSpecifikaciya } = require('./transformers/specifikaciya')
+const { transformDopVoprosy } = require('./transformers/dopVoprosy')
 const { findIncomingFileType } = require('./config/incomingFiles')
 const { buildSampleId } = require('./config/sampleId')
 const { getStaticFiles } = require('./services/staticFiles')
@@ -66,6 +67,11 @@ app.post('/api/generate', upload.array('files'), async (req, res) => {
     const zip = new JSZip()
     zip.file(zadanieName, zadanieBuffer)
     zip.file(specifikaciyaName, specifikaciyaBuffer)
+
+    // "Доп. вопросы" — только для метода ЭК
+    if (controlMethod === 'ЭК') {
+      zip.file('Доп. вопросы.docx', transformDopVoprosy(formData))
+    }
 
     // Файлы, загруженные в drag&drop — каждый обрабатывается своим
     // трансформером (см. backend/config/incomingFiles.js). Итоговый файл
